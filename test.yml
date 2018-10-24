@@ -1,0 +1,39 @@
+---
+- name: Setup new RHEL 7 server
+  hosts: servers
+  become: true
+  tasks:
+    - name: Add EPEL - Check if already present
+      stat: path="/etc/yum.repos.d/epel.repo"
+      register: epel_repofile_result
+
+    - name: Add EPEL - Install EPEL
+      yum:
+        name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
+        state: present
+      register: result
+      when: not epel_repofile_result.stat.exists
+
+    - name: Add EPEL - Import EPEL's GPG Key
+      rpm_key:
+        key: "https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-{{ ansible_distribution_major_version }}"
+        state: present
+      when: not epel_repofile_result.stat.exists
+
+    - name: Enable the Red Hat extras repo
+      rhsm_repository:
+        name: rhel-7-server-extras-rpms
+        state: enabled
+
+    - name: Enable the Red Hat optional repo
+      rhsm_repository:
+        name: rhel-7-server-optional-rpms
+
+    - name: Install other required packages
+      yum: name={item} state=present
+      with_items:
+          - vim_enhanced
+          - rsync
+          - wget
+          - ovirt-guest-agent
+          - ipa-client

@@ -1,0 +1,89 @@
+---
+- name: Post-install setup tasks
+  hosts: workstations
+  become: true
+  tasks:
+    - name: Retrieve GPG key for Chrome repository
+      apt_key:
+        url: https://dl.google.com/linux/linux_signing_key.pub
+    - name: Adding Google Chrome repository
+      apt_repository:
+        repo: deb http://dl.google.com/linux/chrome/deb/ stable main
+        state: present
+        filename: google-chrome
+    - name: Retrieve GPG key for Atom repository
+      apt_key:
+        url: https://packagecloud.io/AtomEditor/atom/gpgkey
+    - name: Adding Atom repository
+      apt_repository:
+        repo: deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main
+        state: present
+        filename: atom
+    - name: Retrieve GPG key for Chrome repository
+      apt_key:
+        url: https://download.sublimetext.com/sublimehq-pub.gpg
+    - name: Adding Sublime Text 3 repository
+      apt_repository:
+        repo: deb https://download.sublimetext.com/ apt/stable/
+        state: present
+        filename: sublime-text
+    - name: Install basic packages
+      apt: 
+        name: "{{ packages }}"
+      vars:
+        packages:
+          - chrony
+          - freeipa-client
+          - kate
+          - yakuake
+          - numlockx
+          - atom
+          - google-chrome-stable
+          - sublime-text
+          - kde-baseapps-bin
+          - kdepasswd
+          # - kdialog
+          - ark
+          - alsa-base
+          - alsa-utils
+          - anacron
+          - bc
+          - inputattach
+          - openprinting-ppds
+          - rfkill
+          - spice-vdagent
+          - ubuntu-drivers-common
+          - snapd
+          - plasma-nm
+          - plasma-runners-addons
+          - plasma-vault
+          - plasma-widgets-addons
+          # - policykit-desktop-priviliges
+          - pavucontrol-qt
+          - packagekit
+          - phonon4qt5-backend-gstreamer
+          - google-chrome-stable
+          - atom
+          - sublime-text
+          - pgadmin3
+          - virtualenv
+          - python-dev
+          - python3-dev
+          - firefox
+    - name: Create slick-greeter config file
+      copy:
+        dest: /etc/lightdm/slick-greeter.conf
+        content: |
+          [Greeter]
+          background=/usr/share/slick-greeter/background.jpg
+          background-color=black
+          draw-grid=false
+          group-filter=showme
+          activate-numlock=true
+        mode: 0644
+    - name: Download background picture for greeter
+      get_url:
+        url: http://pxe.chem.byu.edu/{{ inventory_hostname_short }}.jpg
+        dest: /usr/share/slick-greeter/background.jpg
+    - name: Run script to install snap packages
+      script: /var/www/html/snap.sh
